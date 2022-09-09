@@ -10,6 +10,7 @@ Here is a footnote reference,[^1] and another.
 
 [^1]: Here is the footnote.
 ```
+
 Here is a footnote reference,[^1] and another.
 
 [^1]: Here is the footnote.
@@ -105,5 +106,3 @@ This is also possible for tables and sections. Same princip but with
 # Pandoc
 
 All default pandoc features are supported with the extend of mathjax and pandoc-xnos.
-![caption](/img/3a2ce07d2109eb82f779f71748be8990.webp)
-![caption](/img/pixil-frame-07165101.png)

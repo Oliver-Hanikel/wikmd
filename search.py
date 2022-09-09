@@ -1,11 +1,11 @@
 import os
 import time
 from collections import namedtuple
+from html.parser import HTMLParser
 from multiprocessing import Process
 from pathlib import Path
 from typing import List, NamedTuple, Tuple, Union
 
-from bs4 import BeautifulSoup
 from markdown import Markdown
 from watchdog.events import FileSystemEventHandler, FileSystemEvent
 from watchdog.observers import Observer
@@ -26,6 +26,18 @@ class SearchSchema(SchemaClass):
 SearchResult = namedtuple("Result", "path filename title score highlights")
 
 
+class HTMLTextify(HTMLParser):
+    def __init__(self, *args, **kwargs):
+        self.snippets = []
+        super().__init__(*args, **kwargs)
+
+    def handle_data(self, data):
+        self.snippets.append(data)
+
+    def get_text(self):
+        return "".join(self.snippets)
+
+
 class Search:
     _index: index
     _schema: SearchSchema
@@ -42,8 +54,9 @@ class Search:
     def textify(self, text: str) -> str:
         md = Markdown(extensions=["meta", "extra"])
         html = md.convert(text)
-        soup = BeautifulSoup(html, "html.parser")
-        return soup.get_text()
+        textifier = HTMLTextify()
+        textifier.feed(html)
+        return textifier.get_text()
 
     def search(self, term: str) -> Tuple[List[NamedTuple], List[str]]:
         query = MultifieldParser(["title", "content"], schema=self._schema).parse(term)

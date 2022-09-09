@@ -1,7 +1,4 @@
 import os
-from shutil import ExecError
-import shutil
-import platform
 import time
 import re
 import logging
