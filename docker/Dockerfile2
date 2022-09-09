@@ -5,14 +5,17 @@ WORKDIR /app/wikmd
 
 RUN \
   echo "**** install wikmd dependencies ****" && \
-  apk add --no-cache git gcc linux-headers musl-dev && \
-  apk add --no-cache pandoc --repository=http://dl-cdn.alpinelinux.org/alpine/edge/community && \
+  apk add --no-cache git gcc linux-headers musl-dev pkgconfig && \
+  apk add --no-cache md4c md4c-dev --repository=http://dl-cdn.alpinelinux.org/alpine/edge/testing && \
   \
   echo "**** install pip requirements ****" && \
+  pip3 install pkgconfig && \
   pip3 install -r requirements.txt && \
   \
   echo "**** cleanup ****" && \
-  apk del gcc linux-headers musl-dev
+  pip3 uninstall -y pkgconfig && \
+  pip3 cache purge && \
+  apk del gcc linux-headers md4c-dev musl-dev pkgconfig
 
 ENV LANG=C.UTF-8
 ENV HOME=/wiki

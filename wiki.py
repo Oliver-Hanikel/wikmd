@@ -4,7 +4,7 @@ import re
 import logging
 import uuid
 from lxml.html.clean import clean_html
-import pypandoc
+import md4c
 import knowledge_graph
 import random
 import string
@@ -37,6 +37,15 @@ app.logger.setLevel(logging.INFO)
 # file logger
 logger = logging.getLogger('werkzeug')
 logger.setLevel(logging.ERROR)
+
+# markdown renderer
+md_renderer = md4c.HTMLRenderer(
+    dialect_github=True,
+    collapse_whitespace=True,
+    permissive_atx_headers=True,
+    latex_math_spans=True,
+    wikilinks=True
+)
 
 wrm = WikiRepoManager(flask_app=app)
 
@@ -174,8 +183,9 @@ def file_page(file_page):
 
         try:
             app.logger.info(f"Converting to HTML with pandoc >>> '{md_file_path}' ...")
-            html = pypandoc.convert_file(md_file_path, "html5",
-                                         format='md', extra_args=["--mathjax"], filters=['pandoc-xnos'])
+            with open(md_file_path, "r") as f:
+                html = md_renderer.parse(f.read())
+
             html = clean_html(html)
             cache.set(md_file_path, html)
 
@@ -205,9 +215,9 @@ def index():
 
         try:
             app.logger.info("Converting to HTML with pandoc >>> 'homepage' ...")
-            html = pypandoc.convert_file(
-                md_file_path, "html5", format='md', extra_args=["--mathjax"],
-                filters=['pandoc-xnos'])
+            with open(md_file_path, "r") as f:
+                html = md_renderer.parse(f.read())
+
             html = clean_html(html)
             cache.set(md_file_path, html)
 

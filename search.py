@@ -1,12 +1,11 @@
 import os
 import time
 from collections import namedtuple
-from html.parser import HTMLParser
 from multiprocessing import Process
 from pathlib import Path
 from typing import List, NamedTuple, Tuple, Union
 
-from markdown import Markdown
+import md4c
 from watchdog.events import FileSystemEventHandler, FileSystemEvent
 from watchdog.observers import Observer
 from whoosh import index, query
@@ -26,23 +25,36 @@ class SearchSchema(SchemaClass):
 SearchResult = namedtuple("Result", "path filename title score highlights")
 
 
-class HTMLTextify(HTMLParser):
-    def __init__(self, *args, **kwargs):
+class HTMLTextify:
+    def __init__(self):
+        self.parser = md4c.GenericParser(
+            dialect_github=True,
+            collapse_whitespace=True,
+            permissive_atx_headers=True,
+            latex_math_spans=True,
+            wikilinks=True
+        )
         self.snippets = []
-        super().__init__(*args, **kwargs)
 
-    def handle_data(self, data):
-        self.snippets.append(data)
+    def process_text(self, text_type: md4c.TextType, text: str):
+        self.snippets.append(text)
 
-    def get_text(self):
+    def parse(self, markdown: str) -> str:
+        self.parser.parse(
+            markdown,
+            lambda *args: None, lambda *args: None, lambda *args: None, lambda *args: None,
+            self.process_text
+        )
         return "".join(self.snippets)
 
 
 class Search:
     _index: index
     _schema: SearchSchema
+    _textifier: HTMLTextify
 
     def __init__(self, index_path: str, create: bool = False):
+        self._textifier = HTMLTextify()
         self._schema = SearchSchema()
         if create:
             if not os.path.exists(index_path):
@@ -51,12 +63,6 @@ class Search:
         else:
             self._index = index.open_dir(index_path)
 
-    def textify(self, text: str) -> str:
-        md = Markdown(extensions=["meta", "extra"])
-        html = md.convert(text)
-        textifier = HTMLTextify()
-        textifier.feed(html)
-        return textifier.get_text()
 
     def search(self, term: str) -> Tuple[List[NamedTuple], List[str]]:
         query = MultifieldParser(["title", "content"], schema=self._schema).parse(term)
@@ -80,7 +86,8 @@ class Search:
 
     def index(self, path: str, filename: str, title: str, content: str):
         writer = AsyncWriter(self._index)
-        content = self.textify(content)
+        content = self._textifier.parse(content)
+        print(content, "\n\n\n")
         writer.add_document(path=path, filename=filename, title=title, content=content)
         writer.commit()
 
@@ -96,7 +103,7 @@ class Search:
             fpath = os.path.join(wiki_directory, relpath, path)
             with open(fpath) as f:
                 content = f.read()
-            content = self.textify(content)
+            content = self._textifier.parse(content)
             writer.add_document(
                 path=relpath, filename=path, title=title, content=content
             )
