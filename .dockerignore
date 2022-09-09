@@ -4,9 +4,9 @@ venv/
 .idea/
 
 # Unneeded Files
+.*ignore
 docs/
 tests/
-Dockerfile*
+docker/Dockerfile*
 README.md
 TODO.md
-
