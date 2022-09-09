@@ -1,0 +1,25 @@
+FROM python:3.10-alpine3.16
+
+COPY . /app/wikmd
+WORKDIR /app/wikmd
+
+RUN \
+  echo "**** install wikmd dependencies ****" && \
+  apk add --no-cache git gcc linux-headers musl-dev && \
+  apk add --no-cache pandoc --repository=http://dl-cdn.alpinelinux.org/alpine/edge/community && \
+  \
+  echo "**** install pip requirements ****" && \
+  pip3 install -r requirements.txt && \
+  \
+  echo "**** cleanup ****" && \
+  apk del gcc linux-headers musl-dev
+
+ENV LANG=C.UTF-8
+ENV HOME=/wiki
+ENV WIKI_DIRECTORY=/wiki
+ENV WIKMD_LOGGING_FILE=/var/log/wikmd.log
+
+EXPOSE 5000
+
+CMD ["docker/entrypoint.sh"]
+

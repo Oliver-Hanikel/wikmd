@@ -1,0 +1,31 @@
+FROM python:3.10-slim
+
+COPY . /app/wikmd
+WORKDIR /app/wikmd
+
+RUN \
+  echo "**** install wikmd dependencies ****" && \
+  apt-get update && \
+  apt-get install -y --no-install-recommends build-essential git pandoc && \
+  \
+  echo "**** install pip requirements ****" && \
+  pip3 install -r requirements.txt && \
+  \
+  echo "**** cleanup ****" && \
+  apt-get -y purge build-essential && \
+  apt-get -y autoremove && \
+  rm -rf \
+    /tmp/* \
+    /var/lib/apt/lists/* \
+    /var/tmp/* \
+    /root/.cache
+
+ENV LANG=C.UTF-8
+ENV HOME=/wiki
+ENV WIKI_DIRECTORY=/wiki
+ENV WIKMD_LOGGING_FILE=/var/log/wikmd.log
+
+EXPOSE 5000
+
+CMD ["docker/entrypoint.sh"]
+

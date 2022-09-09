@@ -1,0 +1,12 @@
+# Dev Environment
+__pycache__/
+venv/
+.idea/
+
+# Unneeded Files
+docs/
+tests/
+Dockerfile*
+README.md
+TODO.md
+
